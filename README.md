@@ -76,9 +76,7 @@ Because GreenLens operates as a microservice architecture, you need to run **thr
    * Mac/Linux: `python3 -m venv venv && source venv/bin/activate`
 3. Install dependencies: `pip install -r requirements.txt`
 4. Start the server:
-   \`\`\`bash
-   uvicorn main:app --reload --port 8001
-   \`\`\`
+   `uvicorn main:app --reload --port 8001`
    *Runs on `http://127.0.0.1:8001`*
 
 ### Terminal 2: The Node.js Backend (Express)
@@ -86,9 +84,7 @@ Because GreenLens operates as a microservice architecture, you need to run **thr
 1. Open a new terminal and navigate to the backend: `cd Backend`
 2. Install dependencies: `npm install`
 3. Start the development server:
-   \`\`\`bash
-   npm run dev
-   \`\`\`
+   `npm run dev`
    *Runs on `http://localhost:8000`*
    *(Wait for the `MongoDB connected!` log).*
 
@@ -97,9 +93,7 @@ Because GreenLens operates as a microservice architecture, you need to run **thr
 1. Open a third terminal and navigate to the frontend: `cd Frontend`
 2. Install dependencies: `npm install`
 3. Start the Next.js application:
-   \`\`\`bash
-   npm run dev
-   \`\`\`
+   `npm run dev`
    *Runs on `http://localhost:3000`*
 
 ---
