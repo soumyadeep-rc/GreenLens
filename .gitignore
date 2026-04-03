@@ -1,0 +1,60 @@
+# Default Gitignore for Node and Next.js Apps
+node_modules/
+.pnp
+.pnp.js
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Testing
+coverage/
+
+# Next.js build output
+.next/
+out/
+build/
+
+# Next.js debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Static files
+dist/
+/public/mockServiceWorker.js
+
+# IDEs and OS
+.DS_Store
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+Thumbs.db
+
+# Log files (local debug logs, not needed in repo)
+*.log
+*_utf8.log
+build.log
+build_utf8.log
+error.log
+error_utf8.log
+start.log
+start_utf8.log
+
+# Python virtual environment
+**/.venv/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# ML temp files
+Backend/src/ml/error.log
+Backend/src/ml/start.log
