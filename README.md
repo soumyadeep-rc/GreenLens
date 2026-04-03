@@ -22,7 +22,7 @@ GreenLens is a full-stack, gamified sustainability platform that empowers users 
 
 ## 📂 Folder Structure
 
-\`\`\`text
+```text
 GreenLens/
 ├── Frontend/                 # Next.js Application
 │   ├── src/
@@ -53,8 +53,7 @@ GreenLens/
 │
 ├── .gitignore                # Global git ignores
 └── README.md
-\`\`\`
-
+```
 ---
 
 ## ⚙️ Environment Variables Setup
@@ -62,6 +61,7 @@ GreenLens/
 Before running the project, you need to set up your `.env` files in their respective directories. **Never commit these files to GitHub.**
 
 For reference, `.env.example` is provided in Backend folder and `.env.local.example` is provided in Frontend folder.
+
 ---
 
 ## 🚀 How to Run the Project
@@ -109,7 +109,7 @@ Because GreenLens operates as a microservice architecture, you need to run **thr
 2. **Log In:** Use Clerk to authenticate.
 3. **Connect Wallet:** Go to the Dashboard and click "Connect MetaMask" to link your Web3 wallet. The app will auto-sync if you switch accounts in the extension.
 4. **Log Activity:** Submit an electricity or solar bill.
-5. **Watch the Magic:** * The Node backend sends the data to the FastAPI ML service.
+5. **Watch the Magic:** The Node backend sends the data to the FastAPI ML service.
    * ML determines the token reward.
    * Node calls the Smart Contract via Ethers.js to mint the reward directly to your MetaMask wallet.
    * The Dashboard updates your stats instantly!
