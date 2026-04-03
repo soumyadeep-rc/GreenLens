@@ -70,7 +70,7 @@ Because GreenLens operates as a microservice architecture, you need to run **thr
 
 ### Terminal 1: The Machine Learning Engine (FastAPI)
 *This calculates the rewards and carbon footprints.*
-1. Open a terminal and navigate to the ML folder: `cd ML_Service`
+1. Open a terminal and navigate to the ML folder: `cd Backend/src/ml`
 2. Create and activate a virtual environment (optional but recommended):
    * Windows: `python -m venv venv && venv\Scripts\activate`
    * Mac/Linux: `python3 -m venv venv && source venv/bin/activate`
