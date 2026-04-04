@@ -8,12 +8,13 @@ import {
   VehicleRun,
   ElectricityUsage,
   Address,
-  Solar
+  Solar,
+  Transaction // ✅ ADDED TRANSACTION MODEL
 } from "../models/models.js";
 
 import { getOrCreateUser } from "../utils/userUtils.js";
 
-// --- [NEW] Update Wallet Address ---
+// --- Update Wallet Address ---
 // This bridges the gap between MetaMask and your MongoDB
 export const updateWalletAddress = asyncHandler(async (req, res) => {
   const { walletAddress } = req.body;
@@ -59,109 +60,81 @@ export const getUserDashboard = asyncHandler(async (req, res) => {
 
   let user = await getOrCreateUser(clerkId);
   user = await user.populate("addressId");
-  
   const userId = user._id;
-  const today = new Date();
-  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-  // Fetch all relevant data
-  const [vehicles, forestationData, vehicleRuns, electricBills, solarData] =
+  // 1. Fetch auxiliary data for CO2 and Impact calculations
+  const [vehicles, forestationData, vehicleRuns, solarData] =
     await Promise.all([
       Vehicle.find({ userID: userId }),
       Forestation.find({ userID: userId }), 
       VehicleRun.find({ userID: userId }),
-      ElectricityUsage.find({ userID: userId }),
       Solar.find({ userID: userId }), 
     ]);
 
-  const getMonthName = (date) => {
-      if(!date) return 'Unknown';
-      const d = new Date(date);
-      return d.toLocaleString('default', { month: 'short' });
-  };
-
-  const monthlyMap = {};
+  // 2. Generate the "Last 6 Months" array skeleton for the line chart
+  const today = new Date();
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const last6Months = [];
+  
   for (let i = 5; i >= 0; i--) {
     const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-    const monthKey = d.toLocaleString('default', { month: 'short' });
-    monthlyMap[monthKey] = 0;
+    last6Months.push({
+      month: monthNames[d.getMonth()],
+      year: d.getFullYear(),
+      monthNum: d.getMonth() + 1, // 1-12
+      tokens: 0 // Default to 0
+    });
   }
 
-  const addPoints = (date, points) => {
-      const m = getMonthName(date);
-      if (monthlyMap[m] !== undefined) {
-          monthlyMap[m] += points;
-      }
-  };
+  // 3. ✅ PULL REAL GRAPH DATA: Aggregate Monthly Tokens from the Transaction DB
+  const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
 
-  let transportPoints = 0, electricPoints = 0, solarPoints = 0, plantationPoints = 0;
+  const monthlyData = await Transaction.aggregate([
+    { 
+      $match: { 
+        userID: userId, 
+        createdAt: { $gte: sixMonthsAgo } 
+      } 
+    },
+    { 
+      $group: { 
+        _id: { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } }, 
+        totalTokens: { $sum: "$tokensEarned" } 
+      } 
+    }
+  ]);
 
-  vehicleRuns.forEach(run => {
-      const p = Math.floor((run.currentMonthKMCover || 0) * 2); 
-      addPoints(run.updatedAt || run.createdAt, p);
-      transportPoints += p;
+  // Merge the DB data into our empty 6-month calendar
+  monthlyData.forEach(data => {
+    const targetMonth = last6Months.find(m => m.monthNum === data._id.month && m.year === data._id.year);
+    if (targetMonth) {
+      targetMonth.tokens = data.totalTokens;
+    }
   });
 
-  electricBills.forEach(bill => {
-      const p = 50; 
-      addPoints(bill.createdAt, p);
-      electricPoints += p;
-  });
+  // Strip out the year/monthNum so the frontend just gets { month: "Apr", tokens: 550 }
+  const monthlyTokens = last6Months.map(m => ({ month: m.month, tokens: m.tokens }));
 
-  solarData.forEach(s => {
-      const net = Math.max(0, (s.unitsGenerated || 0) - (s.unitsCharged || 0));
-      const p = Math.floor(net / 5);
-      addPoints(s.createdAt, p);
-      solarPoints += p;
-  });
+  // 4. ✅ PULL REAL PIE CHART DATA: Aggregate Token Breakdown by Activity
+  const breakdownData = await Transaction.aggregate([
+    { $match: { userID: userId } },
+    { $group: { _id: "$activityType", value: { $sum: "$tokensEarned" } } }
+  ]);
 
-  forestationData.forEach(f => {
-      const p = 50 * (f.totalPlants || 1);
-      addPoints(f.updatedAt || f.createdAt, p);
-      plantationPoints += p;
-  });
-
-  const monthlyTokens = Object.keys(monthlyMap).map(key => ({
-      month: key,
-      tokens: monthlyMap[key]
+  const activityBreakdown = breakdownData.map(item => ({
+    name: item._id,
+    value: item.value
   }));
 
-  const activityBreakdown = [
-      { name: 'Transport', value: transportPoints },
-      { name: 'Electricity', value: electricPoints },
-      { name: 'Solar', value: solarPoints },
-      { name: 'Plantation', value: plantationPoints },
-  ].filter(i => i.value > 0);
-
-  if(activityBreakdown.length === 0) {
-      activityBreakdown.push({ name: 'No Activity', value: 1 });
+  // Fallback if no transactions exist yet
+  if (activityBreakdown.length === 0) {
+    activityBreakdown.push({ name: 'No Activity', value: 1 });
   }
 
-  const monthlyElec = electricBills.filter(b => new Date(b.createdAt) >= firstDayOfMonth);
-  const monthlyElecUnits = monthlyElec.reduce((sum, bill) => sum + bill.unitsUsed, 0);
+  // 5. Accurate Total Submissions (Based on actual transactions)
+  const totalSubmissions = await Transaction.countDocuments({ userID: userId });
 
-  const dashboardData = {
-    profile: {
-      fullName: user.fullName,
-      email: user.email,
-      avatarUrl: user.avatarUrl,
-      trustLevel: user.trustLvl,
-      badges: user.badges,
-      address: user.addressId, 
-      walletAddress: user.walletAddress, 
-    },
-    totalGreenTokens: user.greenTokens, 
-    currentCarbonFootprint: user.carbonFootprint,
-    monthlyTokens,
-    activityBreakdown,
-    monthlyStats: {
-      kmDriven: transportPoints,
-      elecUnitsLogged: monthlyElecUnits,
-    },
-    vehicles: vehicles,
-  };
-
-  const totalSubmissions = vehicles.length + (solarData.length > 0 ? 1 : 0) + (forestationData.length > 0 ? 1 : 0) + electricBills.length;
+  // 6. Calculate CO2 Savings (Preserving your original math)
   const treesPlanted = forestationData.length > 0 ? forestationData[0].totalPlants : 0;
   const treeSavings = treesPlanted * 21; 
   const solarUnits = solarData.length > 0 ? (solarData[0].totalSolarUnitsUsed || 0) : 0;
@@ -175,9 +148,26 @@ export const getUserDashboard = asyncHandler(async (req, res) => {
       }
   });
 
-  dashboardData.totalSubmissions = totalSubmissions;
-  dashboardData.treesPlanted = treesPlanted;
-  dashboardData.co2Saved = Math.round(treeSavings + solarSavings + evSavings);
+  // Assemble Payload
+  const dashboardData = {
+    profile: {
+      fullName: user.fullName,
+      email: user.email,
+      avatarUrl: user.avatarUrl,
+      trustLevel: user.trustLvl,
+      badges: user.badges,
+      address: user.addressId, 
+      walletAddress: user.walletAddress, 
+    },
+    totalGreenTokens: user.greenTokens, 
+    currentCarbonFootprint: user.carbonFootprint,
+    monthlyTokens: monthlyTokens,
+    activityBreakdown: activityBreakdown,
+    totalSubmissions: totalSubmissions,
+    treesPlanted: treesPlanted,
+    co2Saved: Math.round(treeSavings + solarSavings + evSavings),
+    vehicles: vehicles,
+  };
 
   return res.status(200).json(new ApiResponse(200, dashboardData, "Dashboard data fetched successfully"));
 });

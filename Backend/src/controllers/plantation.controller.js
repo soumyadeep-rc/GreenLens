@@ -1,10 +1,12 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
-import { User } from "../models/models.js";
-import { Forestation } from "../models/models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import axios from "axios";
+import { User, Forestation, Transaction } from "../models/models.js";
+
+// ✅ 1. IMPORT THE WEB3 MINT FUNCTION
+import { mint } from "../../rewardUser.js";
 
 const TOKENS_PER_PLANT = 10; // You can make this logic more complex later
 
@@ -18,7 +20,7 @@ export const logPlanting = asyncHandler(async (req, res) => {
   if (!numPlantCount || numPlantCount <= 0) {
     throw new ApiError(400, "A valid plant count is required.");
   }
-  // [NEW] Validate new fields
+  // Validate new fields
   if (!plantationLocation || plantationLocation.trim() === "") {
     throw new ApiError(400, "Plantation location is required.");
   }
@@ -48,10 +50,7 @@ export const logPlanting = asyncHandler(async (req, res) => {
   // 5. Calculate tokens
   const tokensEarned = numPlantCount * TOKENS_PER_PLANT;
 
-  // 6. Update the Forestation document
-  // 6. Update the Forestation document
-  
-  // [Check] Cooldown to prevent fraud (12 hours)
+  // 6. Check Cooldown to prevent fraud (12 hours)
   const existingForestation = await Forestation.findOne({ userID: user._id });
   if (existingForestation) {
     const lastPlantTime = new Date(existingForestation.updatedAt).getTime();
@@ -63,6 +62,7 @@ export const logPlanting = asyncHandler(async (req, res) => {
     }
   }
 
+  // 7. Update the Forestation document
   const forestation = await Forestation.findOneAndUpdate(
     { userID: user._id }, // Find the user's summary doc
     {
@@ -76,11 +76,31 @@ export const logPlanting = asyncHandler(async (req, res) => {
     { new: true, upsert: true } // `upsert: true` creates a new doc if none exists
   );
 
-  // 7. Update the User's tokens
+  // 8. Update the User's tokens (Web2)
   user.greenTokens += tokensEarned;
   await user.save({ validateBeforeSave: false });
 
-  // 8. Send response
+  if (tokensEarned > 0) {
+    await Transaction.create({
+      userID: user._id,
+      activityType: "Plantation",
+      tokensEarned: tokensEarned
+    });
+  }
+
+  // ✅ 9. TRIGGER WEB3 BLOCKCHAIN MINTING
+  if (user.walletAddress && tokensEarned > 0) {
+    try {
+      await mint(user.walletAddress, tokensEarned);
+      console.log(`✅ Successfully minted ${tokensEarned} GT for planting ${numPlantCount} trees!`);
+    } catch (blockchainError) {
+      console.error("❌ Blockchain minting failed:", blockchainError);
+    }
+  } else {
+    console.log("⚠️ User has no Web3 wallet connected. Skipped on-chain minting.");
+  }
+
+  // 10. Send response
   return res.status(201).json(
     new ApiResponse(
       201,

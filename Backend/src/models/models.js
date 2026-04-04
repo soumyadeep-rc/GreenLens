@@ -153,6 +153,28 @@ const forestationSchema = new Schema(
   }
 );
 
+// --- ADD THIS TO THE BOTTOM OF models.js ---
+
+const transactionSchema = new mongoose.Schema(
+  {
+    userID: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    activityType: {
+      type: String,
+      required: true, // e.g., "Transport", "Purchases", "Plantation"
+    },
+    tokensEarned: {
+      type: Number,
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
+
+export const Transaction = mongoose.model("Transaction", transactionSchema);  
 export const User = mongoose.models.User || mongoose.model("User", userSchema);
 export const Address = mongoose.models.Address || mongoose.model("Address", addressSchema);
 export const ElectricityUsage = mongoose.models.ElectricityUsage || mongoose.model("ElectricityUsage", electricityUsageSchema);

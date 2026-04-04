@@ -3,6 +3,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth, UserButton } from '@clerk/nextjs'; 
 import Link from 'next/link';
+import dynamic from 'next/dynamic'; // ✅ IMPORT DYNAMIC
+
+// ✅ DYNAMICALLY IMPORT GRAPH TO PREVENT NEXT.JS SSR ERRORS
+const GraphComponent = dynamic(() => import('./GraphComponent'), { ssr: false });
 
 // --- HELPER ICONS ---
 const Icons = {
@@ -95,9 +99,25 @@ export default function UserProfile() {
   if (loading) return <div className="text-center p-10 font-bold text-[#1B5E20]">Loading Dashboard...</div>;
   if (!dashboardData) return <div className="text-center p-10">Failed to load data. Please refresh.</div>;
 
-  // THE FIX: Pulling totalSubmissions and co2Saved directly from the top level
-  const { profile, totalGreenTokens, totalSubmissions, co2Saved } = dashboardData;
+  // --- EXTRACT DATA ---
+  const { 
+    profile, 
+    totalGreenTokens, 
+    totalSubmissions, 
+    co2Saved, 
+    monthlyTokens = [], // Pulling chart data
+    activityBreakdown = [] 
+  } = dashboardData;
+  
   const firstName = profile?.fullName?.split(' ')[0] || 'User';
+
+  // ✅ FALLBACK DUMMY DATA: If backend isn't sending graph data yet, use this so it doesn't render blank!
+  const displayMonthlyTokens = monthlyTokens.length > 0 ? monthlyTokens : [
+    { month: "Jan", tokens: 120 }, { month: "Feb", tokens: 250 }, { month: "Mar", tokens: 410 }
+  ];
+  const displayActivityBreakdown = activityBreakdown.length > 0 ? activityBreakdown : [
+    { name: "Electricity", value: 300 }, { name: "Transport", value: 200 }, { name: "Purchases", value: 150 }, { name: "Plantation", value: 100 }
+  ];
 
   return (
     <div className="min-h-screen bg-[#EAF7F3] p-6 md:p-10 font-sans">
@@ -112,12 +132,13 @@ export default function UserProfile() {
             <p className="text-[#3A7B62] mt-1 text-sm">Track your sustainability journey and earn rewards.</p>
           </div>
           
-          {/* Top right Avatar -> Fully functional Clerk UserButton */}
+          {/* Top right Avatar */}
           <div className="shadow-md rounded-full border-2 border-white flex items-center justify-center">
             <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "w-10 h-10" } }} />
           </div>
         </div>
 
+        {/* --- MAIN GRID --- */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* --- LEFT COLUMN: Profile & Balance --- */}
@@ -177,10 +198,10 @@ export default function UserProfile() {
                 <Icons.Verified /> Verified on-chain
               </div>
 
-              <button className="w-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold py-3 rounded-xl transition-all relative z-10 flex items-center justify-center gap-2">
+              <Link href="/store" className="w-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold py-3 rounded-xl transition-all relative z-10 flex items-center justify-center gap-2">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" /></svg>
                 Redeem Rewards
-              </button>
+              </Link>
             </div>
 
           </div>
@@ -224,7 +245,7 @@ export default function UserProfile() {
                 </Link>
 
                 {/* 3. Travel */}
-                <div className="group flex items-center gap-4 p-4 rounded-2xl border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all cursor-pointer">
+                <Link href="/submit/transport-form" className="group flex items-center gap-4 p-4 rounded-2xl border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all cursor-pointer">
                   <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Icons.Car />
                   </div>
@@ -232,10 +253,10 @@ export default function UserProfile() {
                     <h4 className="font-bold text-gray-800">Sustainable Travel</h4>
                     <p className="text-xs text-gray-500">EVs, Public Transit, or Cycling</p>
                   </div>
-                </div>
+                </Link>
 
                 {/* 4. Tree Plantation */}
-                <div className="group flex items-center gap-4 p-4 rounded-2xl border border-gray-100 hover:border-green-200 hover:shadow-md transition-all cursor-pointer">
+                <Link href="/submit/plantation-form" className="group flex items-center gap-4 p-4 rounded-2xl border border-gray-100 hover:border-green-200 hover:shadow-md transition-all cursor-pointer">
                   <div className="w-12 h-12 rounded-full bg-green-50 text-green-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Icons.Tree />
                   </div>
@@ -243,10 +264,10 @@ export default function UserProfile() {
                     <h4 className="font-bold text-gray-800">Tree Plantation</h4>
                     <p className="text-xs text-gray-500">Upload geotagged photos</p>
                   </div>
-                </div>
+                </Link>
 
-                {/* 5. Eco Purchases (Spans full width) */}
-                <div className="md:col-span-2 group flex items-center gap-4 p-4 rounded-2xl border border-gray-100 hover:border-purple-200 hover:shadow-md transition-all cursor-pointer">
+                {/* 5. Eco Purchases */}
+                <Link href="/submit/purchase-form" className="md:col-span-2 group flex items-center gap-4 p-4 rounded-2xl border border-gray-100 hover:border-purple-200 hover:shadow-md transition-all cursor-pointer">
                   <div className="w-12 h-12 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Icons.Cart />
                   </div>
@@ -254,7 +275,7 @@ export default function UserProfile() {
                     <h4 className="font-bold text-gray-800">Eco-Friendly Purchases</h4>
                     <p className="text-xs text-gray-500">Verify sustainable products & EV purchases</p>
                   </div>
-                </div>
+                </Link>
 
               </div>
             </div>
@@ -264,19 +285,16 @@ export default function UserProfile() {
                <h2 className="text-2xl font-bold text-[#145C42] mb-6">Your Lifetime Impact</h2>
                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                  
-                 {/* Total Submissions */}
                  <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                    <p className="text-xs text-gray-500 font-semibold mb-1">Total Submissions</p>
                    <p className="text-2xl font-black text-gray-800">{totalSubmissions || 0}</p>
                  </div>
                  
-                 {/* Trust Score */}
                  <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
                    <p className="text-xs text-blue-600 font-semibold mb-1">Trust Score</p>
                    <p className="text-2xl font-black text-blue-700">{profile?.trustLevel || 0}</p>
                  </div>
                  
-                 {/* CO2 Saved (Spans 2 columns to fit the grid nicely) */}
                  <div className="col-span-2 p-4 bg-green-50 rounded-2xl border border-green-100">
                    <p className="text-xs text-green-700 font-semibold mb-1">Estimated CO2 Saved</p>
                    <p className="text-2xl font-black text-[#145C42]">{co2Saved || 0} kg</p>
@@ -284,9 +302,41 @@ export default function UserProfile() {
 
                </div>
             </div>
+            
+             
 
           </div>
+        
+        
+
         </div>
+          
+        
+          
+        {/* ✅ ADDED GRAPH SECTION HERE */}
+        <div className="mt-8">
+          <GraphComponent 
+            monthlyTokens={displayMonthlyTokens} 
+            activityBreakdown={displayActivityBreakdown} 
+          />
+        </div>
+        <div className="bg-gradient-to-r from-[#145C42] to-[#1B5E20] rounded-[2rem] shadow-md p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6">
+              <div>
+                <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
+                  <svg className="w-6 h-6 text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                  Boost Your Impact
+                </h3>
+                <p className="text-green-100 text-sm max-w-md">
+                  Want to increase your token earnings and lower your CO2 emissions even further? Check out our top sustainability tips.
+                </p>
+              </div>
+              <Link 
+                href="/recommendation" 
+                className="w-full md:w-auto bg-white text-[#145C42] font-bold py-3 px-6 rounded-xl hover:bg-green-50 transition-colors text-center whitespace-nowrap shadow-lg"
+              >
+                View Recommendations
+              </Link>
+            </div>
       </div>
     </div>
   );

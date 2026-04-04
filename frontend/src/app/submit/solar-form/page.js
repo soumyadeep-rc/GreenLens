@@ -29,7 +29,6 @@ export default function SolarForm() {
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     
-    // 1. Validation: Ensure everything required by the new backend logic is present
     if (!formData.company || !formData.unitsGenerated || !formData.homeType || 
         !formData.carpetArea || !formData.billFile) {
       alert("⚠️ Please fill in all required fields, including home details and the report.");
@@ -40,19 +39,15 @@ export default function SolarForm() {
 
     try {
       const data = new FormData();
-      // These keys now strictly match the Backend Controller's req.body destructuring
       data.append("solarCompany", formData.company);
       data.append("unitsGenerated", formData.unitsGenerated);
       data.append("unitsCharged", formData.unitsCharged || 0);
       data.append("homeType", formData.homeType);
       data.append("carpetArea", formData.carpetArea);
-      
-      // FIXED: Key changed to "bill" to match Backend Multer middleware
       data.append("bill", formData.billFile);
 
       const token = await getToken();
 
-      // 2. API Call to your updated Backend
       const res = await axios.post("http://localhost:8000/api/v1/form/solar", data, {
         withCredentials: true,
         headers: {
@@ -69,7 +64,6 @@ export default function SolarForm() {
       setResponseMsg(`✅ Success! Earned ${tokensEarned} GT. Your new on-chain balance is ${newTotal} GT.`);
       setSubmitted(true);
       
-      // Reset form after a successful sync
       setTimeout(() => {
         setSubmitted(false);
         setResponseMsg('');
@@ -122,7 +116,8 @@ export default function SolarForm() {
               required
               value={formData.company}
               onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-              className="w-full px-4 py-3 bg-amber-50/50 border-2 border-amber-200 rounded-2xl focus:ring-4 focus:ring-amber-500/10 focus:border-amber-600 outline-none transition-all text-amber-900"
+              // ✅ ADDED placeholder:text-amber-400
+              className="w-full px-4 py-3 bg-amber-50/50 border-2 border-amber-200 rounded-2xl focus:ring-4 focus:ring-amber-500/10 focus:border-amber-600 outline-none transition-all text-amber-900 placeholder:text-amber-400"
               placeholder="e.g., Tata Power Solar, Tesla"
             />
           </div>
@@ -138,7 +133,8 @@ export default function SolarForm() {
                 required
                 value={formData.unitsGenerated}
                 onChange={(e) => setFormData({ ...formData, unitsGenerated: e.target.value })}
-                className="w-full px-4 py-3 bg-amber-50/50 border-2 border-amber-200 rounded-2xl focus:border-amber-600 outline-none transition-all"
+                // ✅ ADDED text-amber-900 placeholder:text-amber-400
+                className="w-full px-4 py-3 bg-amber-50/50 border-2 border-amber-200 rounded-2xl focus:border-amber-600 outline-none transition-all text-amber-900 placeholder:text-amber-400"
                 placeholder="0.00"
               />
             </div>
@@ -150,13 +146,14 @@ export default function SolarForm() {
                 type="number"
                 value={formData.unitsCharged}
                 onChange={(e) => setFormData({ ...formData, unitsCharged: e.target.value })}
-                className="w-full px-4 py-3 bg-amber-50/50 border-2 border-amber-200 rounded-2xl focus:border-amber-600 outline-none transition-all"
+                // ✅ ADDED text-amber-900 placeholder:text-amber-400
+                className="w-full px-4 py-3 bg-amber-50/50 border-2 border-amber-200 rounded-2xl focus:border-amber-600 outline-none transition-all text-amber-900 placeholder:text-amber-400"
                 placeholder="Optional"
               />
             </div>
           </div>
 
-          {/* Home Details (New logic) */}
+          {/* Home Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 bg-amber-50/30 rounded-3xl border border-amber-100">
             <div>
               <label className="flex items-center gap-2 text-sm font-bold text-amber-900 mb-2 uppercase tracking-wide">
@@ -166,9 +163,10 @@ export default function SolarForm() {
                 required
                 value={formData.homeType}
                 onChange={(e) => setFormData({ ...formData, homeType: e.target.value })}
-                className="w-full px-4 py-3 bg-white border-2 border-amber-200 rounded-2xl focus:border-amber-600 outline-none"
+                // ✅ ADDED text-amber-900
+                className="w-full px-4 py-3 bg-white border-2 border-amber-200 rounded-2xl focus:border-amber-600 outline-none text-amber-900"
               >
-                <option value="">Select...</option>
+                <option value="" className="text-amber-400">Select...</option>
                 <option value="Apartment">Apartment</option>
                 <option value="Bungalow">Bungalow</option>
                 <option value="Villa">Villa</option>
@@ -184,7 +182,8 @@ export default function SolarForm() {
                 required
                 value={formData.carpetArea}
                 onChange={(e) => setFormData({ ...formData, carpetArea: e.target.value })}
-                className="w-full px-4 py-3 bg-white border-2 border-amber-200 rounded-2xl focus:border-amber-600 outline-none"
+                // ✅ ADDED text-amber-900 placeholder:text-amber-400
+                className="w-full px-4 py-3 bg-white border-2 border-amber-200 rounded-2xl focus:border-amber-600 outline-none text-amber-900 placeholder:text-amber-400"
                 placeholder="e.g. 1200"
               />
             </div>
@@ -207,7 +206,7 @@ export default function SolarForm() {
               className="w-full py-10 border-2 border-dashed border-amber-300 rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:bg-amber-50 transition-all group"
             >
               <Upload className="w-10 h-10 text-amber-400 group-hover:text-amber-600 mb-3" />
-              <span className="text-amber-800 font-semibold">
+              <span className="text-amber-900 font-bold">
                 {formData.billFile ? formData.billFile.name : 'Upload Generation Report'}
               </span>
               <span className="text-xs text-amber-500 mt-1">PDF, JPG, or PNG (Max 5MB)</span>

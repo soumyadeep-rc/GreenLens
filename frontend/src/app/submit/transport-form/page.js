@@ -66,21 +66,22 @@ export default function TransportForm() {
     setLoading(true);
 
     try {
-      // Prepare submit data
-      // Backend expects: mode, distance, isEV
-      let mode = 'default';
-      if(vehicleType === 'cycle') mode = 'bicycle';
-      else if(vehicleType === 'public-transport') mode = 'public transport';
-      else if(vehicleType === '2-wheeler') mode = 'two wheeler';
-      else if(vehicleType === '4-wheeler') mode = 'four wheeler';
+      // Format the Vehicle Type exactly as the backend expects it
+      let backendVehicleType = '';
+      if(vehicleType === 'cycle') backendVehicleType = 'Cycle';
+      else if(vehicleType === 'public-transport') backendVehicleType = 'Public Transport';
+      else if(vehicleType === '2-wheeler') backendVehicleType = '2 Wheeler';
+      else if(vehicleType === '4-wheeler') backendVehicleType = '4 Wheeler';
 
       const payload = {
-        mode: mode,
-        distance: Number(formData.odometerReading), // Using odometer field as "Distance Traveled" for this form logic
-        isEV: isEV
+        isEv: isEV, 
+        vehicleType: backendVehicleType,
+        kmCovered: Number(formData.odometerReading), 
+        odometerReading: Number(formData.odometerReading), 
+        vehicleNumber: formData.vehicleNumber,
+        vehicleModel: formData.vehicleModel,
+        batteryCapacity: formData.evCapacity
       };
-
-      console.log('Sending Transport Data:', payload);
 
       const token = await getToken();
 
@@ -92,21 +93,13 @@ export default function TransportForm() {
         }
       });
 
-      console.log('Backend Response:', res.data);
-      const { tokensChange } = res.data.data;
-
-      // Success!
-      if(tokensChange > 0) {
-        setResponseMsg(`✅ Trip logged! You earned ${tokensChange} Green Points!`);
-      } else if (tokensChange < 0) {
-         setResponseMsg(`✅ Trip logged. ${Math.abs(tokensChange)} points deducted for carbon emissions.`);
-      } else {
-         setResponseMsg(`✅ Trip logged successfully.`);
-      }
+      // ✅ THE FIX: Stop hardcoding the text. Just use the exact message the backend sends!
+      const backendMessage = res.data.message; 
       
+      setResponseMsg(backendMessage);
       setSubmitted(true);
       
-      // Reset form after 3 seconds
+      // Reset form after 4 seconds
       setTimeout(() => {
         setSubmitted(false);
         setResponseMsg('');

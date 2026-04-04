@@ -1,7 +1,8 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
-import { User, Address, Solar } from "../models/models.js";
+// ✅ IMPORTED TRANSACTION
+import { User, Address, Solar, Transaction } from "../models/models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { mint, getBlockchainBalance } from "../../rewardUser.js";
 import axios from "axios";
@@ -34,7 +35,6 @@ export const logSolarGeneration = asyncHandler(async (req, res) => {
   const user = await getOrCreateUser(clerkId);
 
   // --- 2. AUTO-ADDRESS SETUP (Defensive) ---
-  // We search for an existing address; if missing, we create it using form data.
   let address = await Address.findById(user.addressId);
   
   if (!address) {
@@ -44,7 +44,6 @@ export const logSolarGeneration = asyncHandler(async (req, res) => {
       carpetArea: Number(carpetArea) || 1000,
     });
     user.addressId = address._id;
-    // Save the link to the user immediately
     await user.save({ validateBeforeSave: false });
   }
 
@@ -77,7 +76,6 @@ export const logSolarGeneration = asyncHandler(async (req, res) => {
       mlPayload
     );
   } catch (error) {
-    // Detailed logging for your Node terminal
     console.error("❌ ML Service Error Details:", error.response?.data || error.message);
     throw new ApiError(500, "ML service communication failed. Check Node terminal for error details.");
   }
@@ -98,35 +96,40 @@ export const logSolarGeneration = asyncHandler(async (req, res) => {
   );
 
   // --- 6. THE WEB3 SYNC ENGINE (Mint & Re-fetch) ---
-  // Update local CO2 stat from ML response
   user.carbonFootprint = user_co2_footprint_kg;
 
   if (tokens_awarded > 0 && user.walletAddress) {
     try {
       console.log(`Step 1: Minting ${tokens_awarded} GT to ${user.walletAddress}...`);
       
-      // Call the mint function (handles 18 decimal logic internally)
       await mint(user.walletAddress, tokens_awarded);
       
-      // Fetch the absolute truth from the blockchain to ensure DB is in sync
       const freshBalance = await getBlockchainBalance(user.walletAddress);
       user.greenTokens = freshBalance;
       
       console.log("Step 2: Sync Complete. New DB Balance:", user.greenTokens);
     } catch (txError) {
       console.error("⚠️ Blockchain Minting Failed:", txError.message);
-      // Fallback: Increment DB locally if chain fails so user isn't stuck
       user.greenTokens += tokens_awarded;
     }
   } else {
-    // Fallback for users without wallets connected
     user.greenTokens += tokens_awarded;
+  }
+
+  // ✅ 7. TRANSACTION RECEIPT FOR DASHBOARD GRAPHS
+  if (tokens_awarded > 0) {
+    await Transaction.create({
+      userID: user._id,
+      activityType: "Solar",
+      tokensEarned: tokens_awarded
+    });
+    console.log(`DEBUG: Transaction logged for Dashboard Graphs.`);
   }
 
   // Final Database Save
   await user.save({ validateBeforeSave: false });
 
-  // --- 7. FINAL RESPONSE ---
+  // --- 8. FINAL RESPONSE ---
   return res.status(201).json(
     new ApiResponse(201, {
       tokensEarned: tokens_awarded,

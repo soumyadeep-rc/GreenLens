@@ -1,7 +1,8 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
-import { User, Address } from "../models/models.js"; 
+// ✅ IMPORTED TRANSACTION
+import { User, Address, Transaction } from "../models/models.js"; 
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { mint, getBlockchainBalance } from "../../rewardUser.js"; 
 import axios from "axios";
@@ -83,8 +84,18 @@ export const logElectricityBill = asyncHandler(async (req, res) => {
     user.greenTokens += (tokens_awarded || 0);
   }
 
+  // ✅ 5. TRANSACTION RECEIPT FOR DASHBOARD GRAPHS
+  if (tokens_awarded > 0) {
+    await Transaction.create({
+      userID: user._id,
+      activityType: "Electricity",
+      tokensEarned: tokens_awarded
+    });
+    console.log(`DEBUG: Transaction logged for Dashboard Graphs.`);
+  }
+
   await user.save({ validateBeforeSave: false });
-  console.log("--- [5] Success! ---");
+  console.log("--- [6] Success! ---");
 
   return res.status(201).json(
     new ApiResponse(201, {
