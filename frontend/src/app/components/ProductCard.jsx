@@ -23,10 +23,11 @@ const ProductCard = ({ product }) => {
 
       const token = await getToken();
       await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/store/redeem`, 
-        { amount: product.price }, 
-        { headers: { "Authorization": `Bearer ${token}` } }
-      );
+                   `${process.env.NEXT_PUBLIC_API_URL}/store/redeem`, 
+                     { amount: product.price }, 
+                     { headers: { "Authorization": `Bearer ${token}` } 
+                    }
+                  );
 
       alert(`Successfully redeemed ${product.name}! Tokens burned on-chain.`);
       router.push('/home');

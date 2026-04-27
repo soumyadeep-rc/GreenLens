@@ -63,7 +63,7 @@ export default function PlantationForm() {
       const token = await getToken();
 
       // Call Backend API
-      const res = await axios.post("http://localhost:8000/api/v1/form/plantation", data, {
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/form/plantation`, data, {
         withCredentials: true,
         headers: {
            "Content-Type": "multipart/form-data",

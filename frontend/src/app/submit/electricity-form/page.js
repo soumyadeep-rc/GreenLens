@@ -57,13 +57,13 @@ export default function ElectricityForm() {
       const token = await getToken();
 
       // Call Backend API
-      const res = await axios.post("http://localhost:8000/api/v1/form/electricity", data, {
-        withCredentials: true,
-        headers: {
-           "Content-Type": "multipart/form-data",
-           "Authorization": `Bearer ${token}`
-        }
-      });
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/form/electricity`, data, {
+    withCredentials: true,
+    headers: {
+       "Content-Type": "multipart/form-data",
+       "Authorization": `Bearer ${token}`
+    }
+});
       
       console.log('Backend Response:', res.data);
       if(res.data.success) {

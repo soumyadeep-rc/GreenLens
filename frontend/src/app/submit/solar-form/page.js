@@ -48,7 +48,7 @@ export default function SolarForm() {
 
       const token = await getToken();
 
-      const res = await axios.post("http://localhost:8000/api/v1/form/solar", data, {
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/form/solar`, data, {
         withCredentials: true,
         headers: {
           "Content-Type": "multipart/form-data",

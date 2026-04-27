@@ -54,7 +54,7 @@ export default function PurchaseForm() {
       if (!token) throw new Error("Please log in to submit purchases.");
 
       // 5. Send to Backend
-      await axios.post("http://localhost:8000/api/v1/form/purchase", formData, {
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/form/purchase`, formData, {
         headers: { "Authorization": `Bearer ${token}` }
       });
 

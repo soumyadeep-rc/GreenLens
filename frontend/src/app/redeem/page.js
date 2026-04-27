@@ -68,18 +68,18 @@ export default function SubmitPage() {
       if (!token) throw new Error("Please log in to redeem items.");
 
       // ✅ SEND TO BACKEND FOR WEB3 BURNING
-      const res = await axios.post("http://localhost:8000/api/v1/store/redeem", {
-          productId: form.productId,
-          quantity: form.quantity,
-          totalCost: totalCost,
-          shippingDetails: {
-            name: form.name,
-            address: form.address,
-            phone: form.phone
-          }
-      }, {
-          headers: { "Authorization": `Bearer ${token}` } // ✅ INJECT AUTH
-      });
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/store/redeem`, {
+    productId: form.productId,
+    quantity: form.quantity,
+    totalCost: totalCost,
+    shippingDetails: {
+      name: form.name,
+      address: form.address,
+      phone: form.phone
+    }
+}, {
+    headers: { "Authorization": `Bearer ${token}` } // ✅ INJECT AUTH
+});
 
       setSuccess(true);
       alert(`🔥 Redeemed successfully! New Balance: ${res.data.data.newTotalTokens} GT`);

@@ -34,7 +34,8 @@ export default function Navbar() {
 
         const token = await getToken();
         if (token) {
-          await axios.patch("http://localhost:8000/api/v1/users/update-wallet", 
+  
+            await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/users/update-wallet`, 
             { walletAddress: address }, 
             { headers: { "Authorization": `Bearer ${token}` } }
           );
@@ -58,7 +59,7 @@ export default function Navbar() {
         try {
           const token = await getToken();
           if (token) {
-            await axios.patch("http://localhost:8000/api/v1/users/update-wallet", 
+            await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/users/update-wallet`,
               { walletAddress: newAddress }, 
               { headers: { "Authorization": `Bearer ${token}` } }
             );

@@ -30,7 +30,7 @@ export default function UserProfile() {
       const token = await getToken();
       if (!token) return;
 
-      const res = await axios.get("http://localhost:8000/api/v1/users/dashboard", {
+    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/users/dashboard`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       setDashboardData(res.data.data);
@@ -53,7 +53,7 @@ export default function UserProfile() {
         try {
           const token = await getToken();
           if (token) {
-            await axios.patch("http://localhost:8000/api/v1/users/update-wallet", 
+            await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/users/update-wallet`, 
               { walletAddress: newAddress }, 
               { headers: { "Authorization": `Bearer ${token}` } }
             );
@@ -82,7 +82,7 @@ export default function UserProfile() {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         const token = await getToken();
         if (token && accounts.length > 0) {
-          await axios.patch("http://localhost:8000/api/v1/users/update-wallet", 
+          await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/users/update-wallet`, 
             { walletAddress: accounts[0] }, 
             { headers: { "Authorization": `Bearer ${token}` } }
           );

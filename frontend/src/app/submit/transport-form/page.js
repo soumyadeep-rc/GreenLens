@@ -86,7 +86,7 @@ export default function TransportForm() {
       const token = await getToken();
 
       // Call Backend API
-      const res = await axios.post("http://localhost:8000/api/v1/form/transport", payload, {
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/form/transport`, payload, {
         withCredentials: true,
         headers: {
            "Authorization": `Bearer ${token}`
