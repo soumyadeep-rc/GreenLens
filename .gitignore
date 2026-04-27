@@ -1,35 +1,61 @@
-# Default Gitignore for Node and Next.js Apps
+# ========================
+# 1. Dependencies
+# ========================
 node_modules/
 .pnp
 .pnp.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
 
-# Environment variables
+# ========================
+# 2. Environment Variables (CRITICAL)
+# ========================
+# NEVER commit your MetaMask Private Key, Alchemy URL, or Clerk Secrets
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# Testing
-coverage/
-
-# Next.js build output
+# ========================
+# 3. Next.js (Frontend Build)
+# ========================
 .next/
 out/
 build/
-
-# Next.js debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# Static files
 dist/
 /public/mockServiceWorker.js
 
-# IDEs and OS
+# ========================
+# 4. Backend Specifics
+# ========================
+# Ignore temporary uploads before they go to Cloudinary
+Backend/public/temp/*
+!Backend/public/temp/.gitkeep
+
+# ========================
+# 5. Python & Machine Learning
+# ========================
+**/.venv/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# ========================
+# 6. Testing & Logs
+# ========================
+coverage/
+*.log
+*_utf8.log
+
+# ========================
+# 7. OS & Editor Files
+# ========================
 .DS_Store
+Thumbs.db
 .vscode/
 .idea/
 *.suo
@@ -37,24 +63,8 @@ dist/
 *.njsproj
 *.sln
 *.sw?
-Thumbs.db
 
-# Log files (local debug logs, not needed in repo)
-*.log
-*_utf8.log
-build.log
-build_utf8.log
-error.log
-error_utf8.log
-start.log
-start_utf8.log
-
-# Python virtual environment
-**/.venv/
-**/__pycache__/
-*.pyc
-*.pyo
-
-# ML temp files
-Backend/src/ml/error.log
-Backend/src/ml/start.log
+# ========================
+# 8. Miscellaneous 
+# ========================
+todo.txt
