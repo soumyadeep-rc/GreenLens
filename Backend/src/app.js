@@ -8,10 +8,11 @@ const app = express();
 // --- Core Middlewares ---
 app.use(
   cors({
-    origin: "*",
-    credentials: true,
+    origin: process.env.CORS_ORIGIN, 
+    credentials: true 
   })
 );
+
 app.use(express.json({ limit: "16kb" })); // limit for JSON body
 app.use(express.urlencoded({ extended: true, limit: "16kb" })); // handle form data
 app.use(express.static("public")); // assets
